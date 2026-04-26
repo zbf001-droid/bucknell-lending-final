@@ -17,22 +17,76 @@ st.set_page_config(
 # -------------------------
 st.markdown("""
     <style>
-    .main {background-color: #f9f7f4;}
-    
-    /* Slider color - Bucknell Orange */
-    .stSlider > div > div > div > div {
-        background-color: #E87722;
+    :root {
+        --bucknell-blue: #003865;
+        --bucknell-orange: #E87722;
+        --light-bg: #f9f7f4;
+        --light-gray: #e6e8eb;
+        --text-dark: #252733;
     }
-    .stSlider > div > div > div {
-        background-color: #E87722;
+
+    .main {
+        background-color: var(--light-bg);
     }
+
+    .stApp {
+        background-color: var(--light-bg);
+    }
+
+    h1 {
+        color: var(--bucknell-blue);
+    }
+
+    h2 {
+        color: var(--bucknell-blue);
+    }
+
+    h3 {
+        color: var(--bucknell-blue);
+    }
+
+    /* Slider label text */
+    [data-testid="stSlider"] label {
+        color: var(--text-dark) !important;
+        font-weight: 500;
+    }
+
+    /* Slider main dot */
     [data-testid="stSlider"] div[role="slider"] {
-        background-color: #E87722;
-        border-color: #E87722;
+        background-color: var(--bucknell-orange) !important;
+        border-color: var(--bucknell-orange) !important;
+        box-shadow: none !important;
     }
-    
+
+    /* Slider value above dot */
+    [data-testid="stSlider"] div[role="slider"] div {
+        color: var(--bucknell-blue) !important;
+        background-color: transparent !important;
+        font-weight: 600 !important;
+    }
+
+    /* Remove orange backgrounds from slider min/max numbers */
+    [data-testid="stSlider"] span {
+        background-color: transparent !important;
+        color: var(--text-dark) !important;
+    }
+
+    [data-testid="stSlider"] div {
+        box-shadow: none !important;
+    }
+
+    /* Slider track */
+    [data-testid="stSlider"] div[data-baseweb="slider"] > div {
+        background-color: var(--light-gray) !important;
+    }
+
+    /* Filled slider section */
+    [data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
+        background-color: var(--bucknell-orange) !important;
+    }
+
     .stButton>button {
-        background-color: #E87722;
+        background-color: var(--bucknell-blue);
         color: white;
         font-size: 18px;
         font-weight: bold;
@@ -41,31 +95,41 @@ st.markdown("""
         border: none;
         width: 100%;
     }
+
     .stButton>button:hover {
-        background-color: #c9641a;
+        background-color: var(--bucknell-orange);
         color: white;
     }
+
     .result-box {
-        background-color: #003366;
+        background-color: var(--bucknell-blue);
         color: white;
         padding: 20px;
         border-radius: 10px;
         margin-top: 20px;
         text-align: center;
     }
-    .fund {background-color: #2e7d32;}
-    .review {background-color: #E87722;}
-    .decline {background-color: #b71c1c;}
+
+    .fund {
+        background-color: #2e7d32;
+    }
+
+    .review {
+        background-color: var(--bucknell-orange);
+    }
+
+    .decline {
+        background-color: #b71c1c;
+    }
+
     .metric-card {
         background-color: white;
         padding: 15px;
         border-radius: 8px;
-        border-left: 5px solid #E87722;
+        border-left: 5px solid var(--bucknell-blue);
         margin: 8px 0;
     }
-    h1 {color: #003366;}
-    h2 {color: #003366;}
-    h3 {color: #E87722;}
+
     .footer {
         text-align: center;
         color: gray;
