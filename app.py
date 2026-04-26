@@ -1,129 +1,234 @@
-# Streamlit ML Web App Demo: Bucknell Lending Predictor
-
 import streamlit as st
 import pandas as pd
+import numpy as np
 import pickle
 
 # -------------------------
-# Open the file and load the deployment bundle
+# Page Config
 # -------------------------
-file_to_load = 'bucknell_lending_deployment_bundle.pkl'
-with open(file_to_load, 'rb') as file:
-    loaded_bundle = pickle.load(file)
-
-classifier_model = loaded_bundle['classifier_model']
-regressor_model = loaded_bundle['regressor_model']
-scaler = loaded_bundle['scaler']
-final_model_columns = loaded_bundle['final_model_columns']
-numeric_features = loaded_bundle['numeric_features']
-categorical_features = loaded_bundle['categorical_features']
-predictor_cols = loaded_bundle['predictor_cols']
-dti_median = loaded_bundle['dti_median']
-
-# -------------------------
-# Streamlit UI
-# -------------------------
-st.set_page_config(page_title="🏦 Bucknell Lending Predictor", layout="centered")
-st.title("🏦 Bucknell Lending Decision App")
-st.markdown("Enter a potential borrower's application details to estimate loan performance.")
-
-# -------------------------
-# User input
-# -------------------------
-loan_amnt = st.slider("Loan Amount", 1000, 40000, 10000, step=500)
-term_num = st.selectbox("Loan Term (Months)", [36, 60])
-int_rate = st.slider("Interest Rate", 5.3, 30.9, 12.0, step=0.1)
-
-grade = st.selectbox("Grade", ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
-emp_length = st.selectbox(
-    "Employment Length",
-    ['Unknown', '< 1 year', '1 year', '2 years', '3 years', '4 years',
-     '5 years', '6 years', '7 years', '8 years', '9 years', '10+ years']
-)
-home_ownership = st.selectbox("Home Ownership", ['MORTGAGE', 'RENT', 'OWN', 'OTHER', 'NONE', 'ANY'])
-annual_inc = st.slider("Annual Income", 100, 6100000, 75000, step=1000)
-verification_status = st.selectbox("Verification Status", ['Verified', 'Source Verified', 'Not Verified'])
-purpose = st.selectbox(
-    "Loan Purpose",
-    ['debt_consolidation', 'credit_card', 'home_improvement', 'other',
-     'major_purchase', 'medical', 'small_business', 'car', 'vacation',
-     'moving', 'house', 'wedding', 'renewable_energy', 'educational']
+st.set_page_config(
+    page_title="Bucknell Lending Club",
+    page_icon="🦬",
+    layout="centered"
 )
 
-dti = st.slider("Debt-to-Income Ratio", 0.0, 50.0, 15.0, step=0.1)
-delinq_2yrs = st.slider("Delinquencies in Last 2 Years", 0, 26, 0)
-open_acc = st.slider("Open Accounts", 1, 68, 10)
-pub_rec = st.slider("Public Records", 0, 21, 0)
-revol_bal = st.slider("Revolving Balance", 0, 959754, 12000, step=500)
-revol_util = st.slider("Revolving Utilization", 0.0, 152.0, 50.0, step=0.5)
+# -------------------------
+# Bucknell Styling
+# -------------------------
+st.markdown("""
+    <style>
+    .main {background-color: #f9f7f4;}
+    .stButton>button {
+        background-color: #E87722;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 0.6em 2em;
+        border: none;
+        width: 100%;
+    }
+    .stButton>button:hover {
+        background-color: #c9641a;
+        color: white;
+    }
+    .result-box {
+        background-color: #003366;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        text-align: center;
+    }
+    .fund {background-color: #2e7d32;}
+    .review {background-color: #e65100;}
+    .decline {background-color: #b71c1c;}
+    .metric-card {
+        background-color: white;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #E87722;
+        margin: 8px 0;
+    }
+    h1 {color: #003366;}
+    h2 {color: #003366;}
+    h3 {color: #E87722;}
+    </style>
+""", unsafe_allow_html=True)
 
-fico_range_low = st.slider("FICO Range Low", 660, 845, 690)
-fico_range_high = st.slider("FICO Range High", 664, 850, 694)
-credit_age_years = st.slider("Credit Age (Years)", 0.0, 65.0, 15.0, step=0.5)
+# -------------------------
+# Load Models
+# -------------------------
+with open('bucknell_lending_deployment_bundle.pkl', 'rb') as f:
+    bundle = pickle.load(f)
+
+classifier = bundle['classifier']
+regressor = bundle['regressor']
+scaler = bundle['scaler']
+feature_columns = bundle['feature_columns']
+
+# -------------------------
+# Header
+# -------------------------
+st.markdown("<h1 style='text-align:center;'>🦬 Bucknell Lending Club</h1>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align:center; color:#E87722;'>Loan Decision Support System</h3>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:gray;'>Enter a borrower's application details to receive a funding recommendation powered by machine learning.</p>", unsafe_allow_html=True)
+st.markdown("---")
+
+# -------------------------
+# Input Form
+# -------------------------
+st.markdown("### 📋 Loan Details")
+col1, col2 = st.columns(2)
+
+with col1:
+    loan_amnt = st.slider("Loan Amount ($)", 1000, 40000, 10000, step=500)
+    term_num = st.selectbox("Loan Term (Months)", [36, 60])
+    int_rate = st.slider("Interest Rate (%)", 5.3, 30.9, 12.0, step=0.1)
+    grade = st.selectbox("Loan Grade", ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+    purpose = st.selectbox("Loan Purpose", [
+        'debt_consolidation', 'credit_card', 'home_improvement', 'other',
+        'major_purchase', 'medical', 'small_business', 'car', 'vacation',
+        'moving', 'house', 'wedding', 'renewable_energy', 'educational'
+    ])
+
+with col2:
+    annual_inc = st.slider("Annual Income ($)", 10000, 500000, 75000, step=1000)
+    dti = st.slider("Debt-to-Income Ratio", 0.0, 40.0, 15.0, step=0.1)
+    revol_util = st.slider("Revolving Utilization (%)", 0.0, 100.0, 50.0, step=0.5)
+    revol_bal = st.slider("Revolving Balance ($)", 0, 200000, 12000, step=500)
+    fico_range_low = st.slider("FICO Score (Low)", 660, 845, 690)
+
+st.markdown("### 👤 Borrower Profile")
+col3, col4 = st.columns(2)
+
+with col3:
+    emp_length = st.selectbox("Employment Length", [
+        '< 1 year', '1 year', '2 years', '3 years', '4 years',
+        '5 years', '6 years', '7 years', '8 years', '9 years', '10+ years'
+    ])
+    home_ownership = st.selectbox("Home Ownership", ['MORTGAGE', 'RENT', 'OWN', 'OTHER', 'NONE', 'ANY'])
+    verification_status = st.selectbox("Income Verification", ['Verified', 'Source Verified', 'Not Verified'])
+
+with col4:
+    fico_range_high = st.slider("FICO Score (High)", 664, 850, 694)
+    open_acc = st.slider("Open Accounts", 1, 68, 10)
+    pub_rec = st.slider("Public Records", 0, 21, 0)
+    delinq_2yrs = st.slider("Delinquencies (Last 2 Years)", 0, 26, 0)
+
+st.markdown("---")
 
 # -------------------------
 # Prediction
 # -------------------------
-if st.button("Predict Loan Outcome"):
-    fico_avg = (fico_range_low + fico_range_high) / 2
+if st.button("Generate Recommendation"):
 
-    new_applicant = pd.DataFrame({
+    # Apply same preprocessing as notebook
+    annual_inc_log = np.log1p(annual_inc)
+    fico_avg = (fico_range_low + fico_range_high) / 2
+    dti_capped = min(dti, 38.48)
+    revol_util_capped = min(revol_util, 100.0)
+
+    input_df = pd.DataFrame({
         'loan_amnt': [loan_amnt],
         'int_rate': [int_rate],
         'grade': [grade],
         'emp_length': [emp_length],
         'home_ownership': [home_ownership],
-        'annual_inc': [annual_inc],
         'verification_status': [verification_status],
         'purpose': [purpose],
-        'dti': [dti],
-        'delinq_2yrs': [delinq_2yrs],
-        'open_acc': [open_acc],
-        'pub_rec': [pub_rec],
+        'dti': [dti_capped],
+        'delinq_2yrs': [float(delinq_2yrs)],
+        'open_acc': [float(open_acc)],
+        'pub_rec': [float(pub_rec)],
         'revol_bal': [revol_bal],
-        'revol_util': [revol_util],
+        'revol_util': [revol_util_capped],
         'term_num': [term_num],
-        'fico_avg': [fico_avg],
-        'credit_age_years': [credit_age_years]
+        'annual_inc_log': [annual_inc_log],
+        'fico_avg': [fico_avg]
     })
 
-    # fill missing dti if needed
-    new_applicant['dti'] = new_applicant['dti'].fillna(dti_median)
+    # One-hot encode
+    cat_cols = ['grade', 'emp_length', 'home_ownership', 'verification_status', 'purpose']
+    input_df = pd.get_dummies(input_df, columns=cat_cols, drop_first=True)
 
-    # make dummies
-    new_applicant = pd.get_dummies(new_applicant, columns=categorical_features, drop_first=True)
+    # Align columns with training data
+    input_df = input_df.reindex(columns=feature_columns, fill_value=0)
 
-    # line up columns with training data
-    new_applicant = new_applicant.reindex(columns=final_model_columns, fill_value=0)
-
-    # scale numeric columns
-    new_applicant[numeric_features] = scaler.transform(new_applicant[numeric_features])
-
-    # predictions
-    prob_fully_paid = classifier_model.predict_proba(new_applicant)[:, 1][0]
-    prob_charged_off = 1 - prob_fully_paid
-    pred_ret_pess = regressor_model.predict(new_applicant)[0]
-
-    # recommendation rule
-    if (prob_fully_paid >= 0.85) and (pred_ret_pess >= 3):
-        recommendation = "Approve"
-    elif (prob_fully_paid >= 0.75) and (pred_ret_pess >= 0):
-        recommendation = "Review Manually"
-    else:
-        recommendation = "Reject"
-
-    # display results
-    st.write(f"Predicted Probability of Fully Paid: **{prob_fully_paid:.4f}**")
-    st.write(f"Predicted Probability of Charged Off: **{prob_charged_off:.4f}**")
-    st.write(f"Predicted ret_PESS: **{pred_ret_pess:.4f}**")
-    st.success(f"Recommended Action: **{recommendation}**")
-
-    chart_data = pd.DataFrame(
-        {'Probability': [prob_fully_paid, prob_charged_off]},
-        index=['Fully Paid', 'Charged Off']
+    # Scale
+    input_scaled = pd.DataFrame(
+        scaler.transform(input_df),
+        columns=feature_columns
     )
-    st.write("Prediction Breakdown:")
-    st.bar_chart(chart_data)
 
+    # Predict
+    prob_fully_paid = classifier.predict_proba(input_scaled)[:, 0][0]
+    prob_charged_off = classifier.predict_proba(input_scaled)[:, 1][0]
+    pred_return = regressor.predict(input_scaled)[0]
+
+    # Recommendation logic
+    if prob_fully_paid >= 0.85:
+        rec = "FUND"
+        rec_class = "fund"
+        rec_detail = "This application meets our lending criteria. Strong probability of full repayment."
+    elif prob_fully_paid >= 0.70:
+        rec = "REVIEW"
+        rec_class = "review"
+        rec_detail = "This application falls in a gray area. Recommend manual review before funding."
+    else:
+        rec = "DECLINE"
+        rec_class = "decline"
+        rec_detail = "This application presents elevated default risk. Not recommended for funding."
+
+    # -------------------------
+    # Display Results
+    # -------------------------
+    st.markdown("### 📊 Prediction Results")
+
+    col5, col6, col7 = st.columns(3)
+    with col5:
+        st.markdown(f"""
+            <div class='metric-card'>
+                <p style='color:gray; margin:0; font-size:13px;'>P(Fully Paid)</p>
+                <p style='color:#003366; font-size:28px; font-weight:bold; margin:0;'>{prob_fully_paid:.1%}</p>
+            </div>
+        """, unsafe_allow_html=True)
+    with col6:
+        st.markdown(f"""
+            <div class='metric-card'>
+                <p style='color:gray; margin:0; font-size:13px;'>P(Charged Off)</p>
+                <p style='color:#003366; font-size:28px; font-weight:bold; margin:0;'>{prob_charged_off:.1%}</p>
+            </div>
+        """, unsafe_allow_html=True)
+    with col7:
+        st.markdown(f"""
+            <div class='metric-card'>
+                <p style='color:gray; margin:0; font-size:13px;'>Predicted Return</p>
+                <p style='color:#003366; font-size:28px; font-weight:bold; margin:0;'>{pred_return:.2f}%</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+        <div class='result-box {rec_class}'>
+            <h2 style='color:white; margin:0;'>Recommendation: {rec}</h2>
+            <p style='color:white; margin-top:8px;'>{rec_detail}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Probability bar chart
+    st.markdown("### Probability Breakdown")
+    chart_df = pd.DataFrame({
+        'Probability': [prob_fully_paid, prob_charged_off]
+    }, index=['Fully Paid', 'Charged Off'])
+    st.bar_chart(chart_df)
+
+# -------------------------
+# Footer
+# -------------------------
 st.markdown("---")
-st.markdown("**Bucknell Lending Final Project Demo** | Powered by Streamlit")
+st.markdown("""
+    <p style='text-align:center; color:gray; font-size:12px;'>
+    Bucknell Lending Club | ANOP 330 Final Project<br>
+    Model outputs are decision-support tools and should not replace human judgment.
+    </p>
+""", unsafe_allow_html=True)
