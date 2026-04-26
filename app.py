@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import altair as alt
 
 # -------------------------
 # Page Config
@@ -130,7 +131,7 @@ st.markdown("""
         background-color: white;
         padding: 15px;
         border-radius: 8px;
-        border-left: 5px solid var(--bucknell-blue);
+        border-left: 5px solid var(--bucknell-orange);
         margin: 8px 0;
     }
 
@@ -304,9 +305,34 @@ if st.button("🦬 Generate Recommendation"):
     # Probability bar chart
     st.markdown("### Probability Breakdown")
     chart_df = pd.DataFrame({
+        'Outcome': ['Fully Paid', 'Charged Off'],
         'Probability': [prob_fully_paid, prob_charged_off]
-    }, index=['Fully Paid', 'Charged Off'])
-    st.bar_chart(chart_df)
+    })
+
+    probability_chart = alt.Chart(chart_df).mark_bar(
+        cornerRadiusTopLeft=6,
+        cornerRadiusTopRight=6,
+        size=80
+    ).encode(
+        x=alt.X('Outcome:N', title=None, sort=['Fully Paid', 'Charged Off']),
+        y=alt.Y('Probability:Q', title='Probability', scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format='%')),
+        color=alt.Color(
+            'Outcome:N',
+            scale=alt.Scale(
+                domain=['Fully Paid', 'Charged Off'],
+                range=['#003865', '#E87722']
+            ),
+            legend=None
+        ),
+        tooltip=[
+            alt.Tooltip('Outcome:N', title='Outcome'),
+            alt.Tooltip('Probability:Q', title='Probability', format='.1%')
+        ]
+    ).properties(
+        height=350
+    )
+
+    st.altair_chart(probability_chart, use_container_width=True)
 
 # -------------------------
 # Footer
