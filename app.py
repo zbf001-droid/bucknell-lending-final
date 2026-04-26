@@ -18,6 +18,19 @@ st.set_page_config(
 st.markdown("""
     <style>
     .main {background-color: #f9f7f4;}
+    
+    /* Slider color - Bucknell Orange */
+    .stSlider > div > div > div > div {
+        background-color: #E87722;
+    }
+    .stSlider > div > div > div {
+        background-color: #E87722;
+    }
+    [data-testid="stSlider"] div[role="slider"] {
+        background-color: #E87722;
+        border-color: #E87722;
+    }
+    
     .stButton>button {
         background-color: #E87722;
         color: white;
@@ -41,7 +54,7 @@ st.markdown("""
         text-align: center;
     }
     .fund {background-color: #2e7d32;}
-    .review {background-color: #e65100;}
+    .review {background-color: #E87722;}
     .decline {background-color: #b71c1c;}
     .metric-card {
         background-color: white;
@@ -53,6 +66,12 @@ st.markdown("""
     h1 {color: #003366;}
     h2 {color: #003366;}
     h3 {color: #E87722;}
+    .footer {
+        text-align: center;
+        color: gray;
+        font-size: 12px;
+        margin-top: 20px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -72,7 +91,7 @@ feature_columns = bundle['feature_columns']
 # -------------------------
 st.markdown("<h1 style='text-align:center;'>🦬 Bucknell Lending Club</h1>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align:center; color:#E87722;'>Loan Decision Support System</h3>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:gray;'>Enter a borrower's application details to receive a funding recommendation powered by machine learning.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:gray;'>Helping Bucknell Lending Club make smarter funding decisions, one application at a time.</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # -------------------------
@@ -97,7 +116,7 @@ with col2:
     dti = st.slider("Debt-to-Income Ratio", 0.0, 40.0, 15.0, step=0.1)
     revol_util = st.slider("Revolving Utilization (%)", 0.0, 100.0, 50.0, step=0.5)
     revol_bal = st.slider("Revolving Balance ($)", 0, 200000, 12000, step=500)
-    fico_range_low = st.slider("FICO Score (Low)", 660, 845, 690)
+    fico_score = st.slider("FICO Score", 660, 850, 692)
 
 st.markdown("### 👤 Borrower Profile")
 col3, col4 = st.columns(2)
@@ -111,7 +130,6 @@ with col3:
     verification_status = st.selectbox("Income Verification", ['Verified', 'Source Verified', 'Not Verified'])
 
 with col4:
-    fico_range_high = st.slider("FICO Score (High)", 664, 850, 694)
     open_acc = st.slider("Open Accounts", 1, 68, 10)
     pub_rec = st.slider("Public Records", 0, 21, 0)
     delinq_2yrs = st.slider("Delinquencies (Last 2 Years)", 0, 26, 0)
@@ -121,11 +139,11 @@ st.markdown("---")
 # -------------------------
 # Prediction
 # -------------------------
-if st.button("Generate Recommendation"):
+if st.button("🦬 Generate Recommendation"):
 
     # Apply same preprocessing as notebook
     annual_inc_log = np.log1p(annual_inc)
-    fico_avg = (fico_range_low + fico_range_high) / 2
+    fico_avg = float(fico_score)
     dti_capped = min(dti, 38.48)
     revol_util_capped = min(revol_util, 100.0)
 
@@ -227,8 +245,7 @@ if st.button("Generate Recommendation"):
 # -------------------------
 st.markdown("---")
 st.markdown("""
-    <p style='text-align:center; color:gray; font-size:12px;'>
-    Bucknell Lending Club | ANOP 330 Final Project<br>
-    Model outputs are decision-support tools and should not replace human judgment.
+    <p class='footer'>
+    🦬 Bucknell Lending Club | ANOP 330 Final Project | Lewisburg, PA
     </p>
 """, unsafe_allow_html=True)
