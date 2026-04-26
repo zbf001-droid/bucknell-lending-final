@@ -154,7 +154,6 @@ classifier = bundle['classifier']
 regressor = bundle['regressor']
 scaler = bundle['scaler']
 feature_columns = bundle['feature_columns']
-st.write("Classifier classes:", classifier.classes_)
 
 # -------------------------
 # Header
