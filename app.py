@@ -51,37 +51,41 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Slider main dot */
-    [data-testid="stSlider"] div[role="slider"] {
-        background-color: var(--bucknell-orange) !important;
-        border-color: var(--bucknell-orange) !important;
-        box-shadow: none !important;
-    }
-
-    /* Slider value above dot */
-    [data-testid="stSlider"] div[role="slider"] div {
-        color: var(--bucknell-blue) !important;
+    /* Keep slider container clean */
+    [data-testid="stSlider"] {
         background-color: transparent !important;
-        font-weight: 600 !important;
-    }
-
-    /* Remove orange backgrounds from slider min/max numbers */
-    [data-testid="stSlider"] span {
-        background-color: transparent !important;
-        color: var(--text-dark) !important;
     }
 
     [data-testid="stSlider"] div {
         box-shadow: none !important;
     }
 
-    /* Slider track */
-    [data-testid="stSlider"] div[data-baseweb="slider"] > div {
-        background-color: var(--light-gray) !important;
+    /* Hide min/max slider numbers */
+    [data-testid="stTickBar"] {
+        display: none !important;
     }
 
-    /* Filled slider section */
-    [data-testid="stSlider"] div[data-baseweb="slider"] > div > div {
+    /* Remove any background box around slider numbers */
+    [data-testid="stSlider"] span {
+        background-color: transparent !important;
+    }
+
+    /* Current slider value */
+    [data-testid="stSlider"] div[role="slider"] div {
+        color: var(--bucknell-blue) !important;
+        background-color: transparent !important;
+        font-weight: 700 !important;
+    }
+
+    /* Slider dot */
+    [data-testid="stSlider"] div[role="slider"] {
+        background-color: var(--bucknell-orange) !important;
+        border-color: var(--bucknell-orange) !important;
+        box-shadow: none !important;
+    }
+
+    /* Filled slider line */
+    [data-testid="stSlider"] div[data-baseweb="slider"] div[style*="background"] {
         background-color: var(--bucknell-orange) !important;
     }
 
